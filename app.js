@@ -1,10 +1,5 @@
 var app = require('express').createServer()
-  , io = require('socket.io').listen(app, {
-		transports:['xhr-polling']
-	  , transportOptions: {
-			'xhr-polling': {duration: 10000}
-		}
-	})
+  , io = require('socket.io').listen(app)
   , mongo = require('mongoose')
   , amqp = require('amqp')
   , cf = require("cloudfoundry");
@@ -50,7 +45,7 @@ app.listen(80, function(){
 		// amqp
 		var connection = amqp.createConnection(rabbitConfig());
 		connection.on('ready', function(){
-			var queue = connection.queue('myq');
+			var queue = connection.queue('new-chat');
 			// subscribe 'myq' queue
 			queue.subscribe(function(message){
 				// receive chat's id from RabbitMQ.
@@ -58,7 +53,7 @@ app.listen(80, function(){
 				// find Chat data from MongoDB.
 				Chats.findById(chatId, function(err, chat){
 					if(!err) {
-						socket.emit('chat', {message: chat}); 
+						io.sockets.emit('chat', {message: chat}); 
 					}
 				});
 			});
